@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/screenshot.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/screenshot",
+      "dest": "api/screenshot.ts",
+      "methods": ["POST"]
+    }
+  ]
+}
