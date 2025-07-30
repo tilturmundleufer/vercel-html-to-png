@@ -1,31 +1,32 @@
+import { chromium } from '@sparticuz/chromium';
 import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
+import { NextRequest } from 'next/server';
 
-export default async function handler(req, res) {
-  try {
-    const { html = '', css = '' } = req.body || {};
+export const config = {
+  runtime: 'edge',
+};
 
-    if (!html) {
-      return res.status(400).json({ error: 'Missing HTML' });
-    }
+export default async function handler(req: NextRequest) {
+  const url = 'https://example.com'; // Ersetze mit gewünschtem HTML
 
-    const browser = await puppeteer.launch({
-      args: chromium.args,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
-      defaultViewport: { width: 800, height: 600 }
-    });
+  const browser = await puppeteer.launch({
+    args: chromium.args,
+    executablePath: await chromium.executablePath(),
+    headless: chromium.headless,
+  });
 
-    const page = await browser.newPage();
-    await page.setContent(`<style>${css}</style>${html}`, { waitUntil: 'networkidle0' });
+  const page = await browser.newPage();
+  await page.setViewport({ width: 1200, height: 800 });
+  await page.goto(url, { waitUntil: 'networkidle0' });
 
-    const screenshot = await page.screenshot({ type: 'png' });
-    await browser.close();
+  const screenshotBuffer = await page.screenshot({ type: 'png' });
+  await browser.close();
 
-    res.setHeader('Content-Type', 'image/png');
-    res.status(200).send(screenshot);
-  } catch (err) {
-    console.error('Screenshot error:', err);
-    res.status(500).json({ error: 'Screenshot failed', details: err.message });
-  }
+  return new Response(screenshotBuffer, {
+    headers: {
+      'Content-Type': 'image/png',
+      'Content-Disposition': 'inline; filename="screenshot.png"',
+      'Content-Length': screenshotBuffer.length.toString(),
+    },
+  });
 }
